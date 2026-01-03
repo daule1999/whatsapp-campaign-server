@@ -49,7 +49,13 @@ async function connectMySQL() {
  */
 async function syncDB() {
     if (config.database.type === 'mysql' && sequelize) {
-        await sequelize.sync({ alter: true });
+        // TiDB Serverless doesn't support ALTER TABLE for constraints
+        // Use alter:true only in development with standard MySQL
+        const syncOptions = config.app.env === 'production'
+            ? {} // Just create tables if not exist
+            : { alter: true }; // Allow schema changes in dev
+
+        await sequelize.sync(syncOptions);
         console.log('✓ Database tables synchronized');
     }
     // MongoDB doesn't need sync
