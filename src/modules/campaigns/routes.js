@@ -299,11 +299,23 @@ router.post('/:id/send',
                 const updates = [];
 
                 for (const cc of campaignContacts) {
-                    const contact = dbType === 'mysql' ? cc.Contact : cc.contactId;
+                    const contact = dbType === 'mysql' ? cc.Person : cc.contactId;
                     const ccId = dbType === 'mysql' ? cc.id : cc._id;
 
+                    if (!contact) {
+                        console.warn(`Contact not found for CampaignContact ${ccId}, skipping.`);
+                        continue;
+                    }
+
+                    const phone = dbType === 'mysql' ? (contact.phoneNumber || contact.phone) : contact.phone;
+
+                    if (!phone) {
+                        console.warn(`Phone number missing for Contact ${contact.id || contact._id}, skipping.`);
+                        continue;
+                    }
+
                     messages.push({
-                        phone: contact.phone,
+                        phone: phone,
                         templateName: template.waTemplateName,
                         languageCode: template.languageCode || 'en',
                         components: template.components || [],
@@ -337,16 +349,27 @@ router.post('/:id/send',
             let failed = 0;
 
             for (const cc of campaignContacts) {
-                const contact = dbType === 'mysql' ? cc.Contact : cc.contactId;
+                const contact = dbType === 'mysql' ? cc.Person : cc.contactId;
+                const ccId = dbType === 'mysql' ? cc.id : cc._id;
+
+                if (!contact) {
+                    console.warn(`Contact not found for CampaignContact ${ccId}, skipping.`);
+                    continue;
+                }
+
+                const phone = dbType === 'mysql' ? (contact.phoneNumber || contact.phone) : contact.phone;
+
+                if (!phone) {
+                    console.warn(`Phone number missing for Contact ${contact.id || contact._id}, skipping.`);
+                    continue;
+                }
 
                 const result = await whatsapp.sendTemplateMessage(
-                    contact.phone,
+                    phone,
                     template.waTemplateName,
                     template.languageCode || 'en',
                     template.components || []
                 );
-
-                const ccId = dbType === 'mysql' ? cc.id : cc._id;
 
                 if (result.success) {
                     await campaignContactRepository.updateById(ccId, {
