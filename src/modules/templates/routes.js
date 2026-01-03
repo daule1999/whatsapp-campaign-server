@@ -50,13 +50,19 @@ router.post('/',
         try {
             const { name, wa_template_name, category, language_code, body_preview, components } = req.body;
 
+            // Auto-construct components if not provided but body_preview exists
+            let templateComponents = components;
+            if ((!components || components.length === 0) && body_preview) {
+                templateComponents = [{ type: 'BODY', text: body_preview }];
+            }
+
             // 1. Create on WhatsApp
             const apiResult = await whatsapp.createTemplate({
                 name: wa_template_name,
                 category: category || 'MARKETING',
                 allow_category_change: true,
                 language: language_code || 'en',
-                components: components || []
+                components: templateComponents || []
             });
 
             if (!apiResult.success) {

@@ -97,6 +97,7 @@ class WhatsAppService {
      */
     async createTemplate(data) {
         const url = `${this.apiUrl}/${config.whatsapp.businessAccountId}/message_templates`;
+        console.log('Creating WhatsApp template:', { url, data: JSON.stringify(data, null, 2) });
         try {
             const response = await axios.post(
                 url,
