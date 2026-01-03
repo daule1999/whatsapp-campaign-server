@@ -15,7 +15,7 @@ class CampaignContactRepository {
 
     getContactModel() {
         const models = require('../models');
-        return models.Contact;
+        return models.Person;
     }
 
     async findById(id) {
@@ -34,14 +34,14 @@ class CampaignContactRepository {
             if (options.includeContact) {
                 include.push({
                     model: this.getContactModel(),
-                    attributes: ['id', 'name', 'phone', 'email']
+                    attributes: ['id', 'firstName', 'lastName', 'phoneNumber', 'email']
                 });
             }
             return await CampaignContact.findAll({ where: filter, include });
         } else {
             let query = CampaignContact.find(filter);
             if (options.includeContact) {
-                query = query.populate('contactId', 'name phone email');
+                query = query.populate('contactId', 'firstName lastName phoneNumber email');
             }
             return await query;
         }
@@ -54,30 +54,38 @@ class CampaignContactRepository {
                 where: { campaignId },
                 include: [{
                     model: this.getContactModel(),
-                    attributes: ['id', 'name', 'phone', 'email']
+                    attributes: ['id', 'firstName', 'lastName', 'phoneNumber', 'email']
                 }]
             });
 
-            return results.map(cc => ({
-                ...cc.toJSON(),
-                contact_id: cc.contactId,
-                name: cc.Contact?.name,
-                phone: cc.Contact?.phone,
-                email: cc.Contact?.email
-            }));
+            return results.map(cc => {
+                const person = cc.Person || {};
+                const name = `${person.firstName || ''} ${person.lastName || ''}`.trim();
+
+                return {
+                    ...cc.toJSON(),
+                    contact_id: cc.contactId,
+                    name: name || 'Unknown',
+                    phone: person.phoneNumber,
+                    email: person.email
+                };
+            });
         } else {
             const results = await CampaignContact.find({ campaignId })
-                .populate('contactId', 'name phone email');
+                .populate('contactId', 'firstName lastName phoneNumber email');
 
             return results.map(cc => {
                 const obj = cc.toObject();
+                const person = cc.contactId || {};
+                const name = `${person.firstName || ''} ${person.lastName || ''}`.trim();
+
                 return {
                     ...obj,
                     id: obj._id,
                     contact_id: cc.contactId?._id,
-                    name: cc.contactId?.name,
-                    phone: cc.contactId?.phone,
-                    email: cc.contactId?.email
+                    name: name || 'Unknown',
+                    phone: person.phoneNumber,
+                    email: person.email
                 };
             });
         }

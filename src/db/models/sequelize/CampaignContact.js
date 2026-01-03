@@ -21,7 +21,7 @@ module.exports = (sequelize) => {
             allowNull: false,
             field: 'contact_id',
             references: {
-                model: 'contacts',
+                model: 'persons',
                 key: 'id'
             }
         },

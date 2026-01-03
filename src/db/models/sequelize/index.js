@@ -49,14 +49,14 @@ Template.hasMany(Campaign, { foreignKey: 'templateId', as: 'campaigns' });
 
 Campaign.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 Campaign.belongsTo(Template, { foreignKey: 'templateId', as: 'template' });
-Campaign.belongsToMany(Contact, {
+Campaign.belongsToMany(Person, {
     through: CampaignContact,
     foreignKey: 'campaignId',
     otherKey: 'contactId',
-    as: 'contacts'
+    as: 'contacts' // Keeping alias 'contacts' for backward compatibility in API response
 });
 
-Contact.belongsToMany(Campaign, {
+Person.belongsToMany(Campaign, {
     through: CampaignContact,
     foreignKey: 'contactId',
     otherKey: 'campaignId',
@@ -64,7 +64,7 @@ Contact.belongsToMany(Campaign, {
 });
 
 CampaignContact.belongsTo(Campaign, { foreignKey: 'campaignId' });
-CampaignContact.belongsTo(Contact, { foreignKey: 'contactId' });
+CampaignContact.belongsTo(Person, { foreignKey: 'contactId' });
 
 module.exports = {
     sequelize,
