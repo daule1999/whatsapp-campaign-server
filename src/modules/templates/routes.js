@@ -2,6 +2,7 @@ const express = require('express');
 const { body, query } = require('express-validator');
 const { templateRepository } = require('../../db/repositories');
 const { authenticate, validate, auditLog } = require('../../middleware');
+const whatsapp = require('../../services/whatsapp');
 
 const router = express.Router();
 
@@ -38,6 +39,7 @@ router.post('/',
     [
         body('name').trim().notEmpty().withMessage('Name is required'),
         body('wa_template_name').trim().notEmpty().withMessage('WhatsApp template name is required'),
+        body('category').optional().isIn(['MARKETING', 'UTILITY', 'AUTHENTICATION']),
         body('language_code').optional().isLength({ min: 2, max: 5 }),
         body('body_preview').optional().isString(),
         body('components').optional().isArray(),
@@ -46,14 +48,33 @@ router.post('/',
     auditLog('TEMPLATE_CREATE', 'template'),
     async (req, res) => {
         try {
-            const { name, wa_template_name, language_code, body_preview, components } = req.body;
+            const { name, wa_template_name, category, language_code, body_preview, components } = req.body;
 
+            // 1. Create on WhatsApp
+            const apiResult = await whatsapp.createTemplate({
+                name: wa_template_name,
+                category: category || 'MARKETING',
+                language: { code: language_code || 'en' },
+                components: components || []
+            });
+
+            if (!apiResult.success) {
+                return res.status(400).json({
+                    success: false,
+                    error: `WhatsApp API Error: ${apiResult.error}`,
+                    details: apiResult.rawError
+                });
+            }
+
+            // 2. Create in Database
             const template = await templateRepository.create({
                 name,
                 waTemplateName: wa_template_name,
+                category: category || 'MARKETING',
                 languageCode: language_code || 'en',
                 bodyPreview: body_preview || '',
                 components: components || [],
+                status: apiResult.data.status ? apiResult.data.status.toLowerCase() : 'pending',
                 createdBy: req.user.id
             });
 

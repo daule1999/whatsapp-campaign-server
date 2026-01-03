@@ -89,6 +89,34 @@ class WhatsAppService {
     }
 
     /**
+     * Create message template on WhatsApp
+     */
+    async createTemplate(data) {
+        try {
+            const response = await axios.post(
+                `${this.apiUrl}/${config.whatsapp.businessAccountId}/message_templates`,
+                data,
+                {
+                    headers: { 'Authorization': `Bearer ${this.token}` }
+                }
+            );
+
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            console.error('Create template error:', error.response?.data || error.message);
+            const rawError = error.response?.data?.error;
+            return {
+                success: false,
+                error: rawError?.message || error.message,
+                rawError: rawError
+            };
+        }
+    }
+
+    /**
      * Get message templates from WhatsApp
      */
     async getTemplates() {

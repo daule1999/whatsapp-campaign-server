@@ -30,9 +30,13 @@ module.exports = (sequelize) => {
             type: DataTypes.JSON,
             allowNull: true
         },
+        category: {
+            type: DataTypes.ENUM('MARKETING', 'UTILITY', 'AUTHENTICATION'),
+            defaultValue: 'MARKETING'
+        },
         status: {
-            type: DataTypes.ENUM('active', 'inactive'),
-            defaultValue: 'active'
+            type: DataTypes.ENUM('active', 'inactive', 'pending', 'approved', 'rejected'),
+            defaultValue: 'pending'
         },
         createdBy: {
             type: DataTypes.INTEGER,
