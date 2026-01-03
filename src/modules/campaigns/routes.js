@@ -197,6 +197,7 @@ router.post('/:id/contacts',
                     if (created) added++;
                     else skipped++;
                 } catch (e) {
+                    console.error('Failed to add contact:', e);
                     skipped++;
                 }
             }
