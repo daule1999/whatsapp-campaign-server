@@ -202,6 +202,90 @@ class WhatsAppService {
     }
 
     /**
+     * Send interactive button message (for chatbot menus)
+     */
+    async sendInteractiveButtons(to, bodyText, buttons) {
+        const payload = {
+            messaging_product: 'whatsapp',
+            to: this.formatPhone(to),
+            type: 'interactive',
+            interactive: {
+                type: 'button',
+                body: { text: bodyText },
+                action: {
+                    buttons: buttons.slice(0, 3).map((btn, idx) => ({
+                        type: 'reply',
+                        reply: {
+                            id: btn.id || `btn_${idx}`,
+                            title: btn.title.substring(0, 20) // Max 20 chars
+                        }
+                    }))
+                }
+            }
+        };
+
+        try {
+            const response = await axios.post(
+                `${this.apiUrl}/${this.phoneNumberId}/messages`,
+                payload,
+                { headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' } }
+            );
+            return { success: true, messageId: response.data.messages?.[0]?.id };
+        } catch (error) {
+            console.error('Send interactive error:', error.response?.data || error.message);
+            return { success: false, error: error.response?.data?.error?.message || error.message };
+        }
+    }
+
+    /**
+     * Send image message
+     */
+    async sendImageMessage(to, imageUrl, caption = '') {
+        const payload = {
+            messaging_product: 'whatsapp',
+            to: this.formatPhone(to),
+            type: 'image',
+            image: { link: imageUrl, caption }
+        };
+
+        try {
+            const response = await axios.post(
+                `${this.apiUrl}/${this.phoneNumberId}/messages`,
+                payload,
+                { headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' } }
+            );
+            return { success: true, messageId: response.data.messages?.[0]?.id };
+        } catch (error) {
+            console.error('Send image error:', error.response?.data || error.message);
+            return { success: false, error: error.response?.data?.error?.message || error.message };
+        }
+    }
+
+    /**
+     * Send a simple text message (within 24-hour window)
+     */
+    async sendFreeTextMessage(to, text) {
+        const payload = {
+            messaging_product: 'whatsapp',
+            to: this.formatPhone(to),
+            type: 'text',
+            text: { body: text }
+        };
+
+        try {
+            const response = await axios.post(
+                `${this.apiUrl}/${this.phoneNumberId}/messages`,
+                payload,
+                { headers: { 'Authorization': `Bearer ${this.token}`, 'Content-Type': 'application/json' } }
+            );
+            return { success: true, messageId: response.data.messages?.[0]?.id };
+        } catch (error) {
+            console.error('Send text error:', error.response?.data || error.message);
+            return { success: false, error: error.response?.data?.error?.message || error.message };
+        }
+    }
+
+    /**
      * Check if API is configured
      */
     isConfigured() {

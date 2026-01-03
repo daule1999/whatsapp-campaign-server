@@ -40,10 +40,12 @@ const Campaign = require('./Campaign')(sequelize);
 const CampaignContact = require('./CampaignContact')(sequelize);
 const AuditLog = require('./AuditLog')(sequelize);
 const ErrorLog = require('./ErrorLog')(sequelize);
+const Autoresponder = require('./Autoresponder')(sequelize);
 
 // Define associations
 User.hasMany(Template, { foreignKey: 'createdBy', as: 'templates' });
 User.hasMany(Campaign, { foreignKey: 'createdBy', as: 'campaigns' });
+User.hasMany(Autoresponder, { foreignKey: 'createdBy', as: 'autoresponders' });
 
 Template.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 Template.hasMany(Campaign, { foreignKey: 'templateId', as: 'campaigns' });
@@ -67,6 +69,8 @@ Person.belongsToMany(Campaign, {
 CampaignContact.belongsTo(Campaign, { foreignKey: 'campaignId' });
 CampaignContact.belongsTo(Person, { foreignKey: 'contactId' });
 
+Autoresponder.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+
 module.exports = {
     sequelize,
     User,
@@ -76,5 +80,6 @@ module.exports = {
     Campaign,
     CampaignContact,
     AuditLog,
-    ErrorLog
+    ErrorLog,
+    Autoresponder
 };

@@ -5,6 +5,7 @@ const personRepository = require('./PersonRepository');
 const campaignRepository = require('./CampaignRepository');
 const campaignContactRepository = require('./CampaignContactRepository');
 const auditLogRepository = require('./AuditLogRepository');
+const autoresponderRepository = require('./AutoresponderRepository');
 
 module.exports = {
     userRepository,
@@ -14,5 +15,6 @@ module.exports = {
     campaignRepository,
     campaignContactRepository,
     auditLogRepository,
-    errorLogRepository: require('./ErrorLogRepository')
+    errorLogRepository: require('./ErrorLogRepository'),
+    autoresponderRepository
 };

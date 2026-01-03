@@ -43,6 +43,7 @@ app.use('/api/campaigns', campaignsRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/v1', apiRoutes);  // Public API
+app.use('/api/autoresponders', require('./modules/autoresponders/routes'));  // Chatbot workflows
 app.use('/webhook', webhookRoutes);
 
 // Health check
