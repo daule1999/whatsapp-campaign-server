@@ -54,6 +54,7 @@ router.post('/',
             const apiResult = await whatsapp.createTemplate({
                 name: wa_template_name,
                 category: category || 'MARKETING',
+                allow_category_change: true,
                 language: { code: language_code || 'en' },
                 components: components || []
             });

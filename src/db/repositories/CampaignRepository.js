@@ -31,7 +31,7 @@ class CampaignRepository {
                 include.push({
                     model: this.getTemplateModel(),
                     as: 'template',
-                    attributes: options.templateFields || ['id', 'name', 'waTemplateName', 'languageCode', 'components']
+                    attributes: options.templateFields || ['id', 'name', 'waTemplateName', 'languageCode', 'components', 'status']
                 });
             }
             return await Campaign.findByPk(id, { include });

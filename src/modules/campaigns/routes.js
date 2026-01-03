@@ -98,6 +98,7 @@ router.get('/:id', async (req, res) => {
             result = {
                 ...campaign.toJSON(),
                 template_name: campaign.template?.name,
+                template_status: campaign.template?.status,
                 wa_template_name: campaign.template?.waTemplateName,
                 language_code: campaign.template?.languageCode,
                 contacts
@@ -108,6 +109,7 @@ router.get('/:id', async (req, res) => {
                 ...obj,
                 id: obj._id,
                 template_name: campaign.templateId?.name,
+                template_status: campaign.templateId?.status,
                 wa_template_name: campaign.templateId?.waTemplateName,
                 language_code: campaign.templateId?.languageCode,
                 contacts
@@ -283,6 +285,10 @@ router.post('/:id/send',
 
             if (!template) {
                 return res.status(400).json({ success: false, error: 'Campaign must have a template' });
+            }
+
+            if (template.status && template.status !== 'approved') {
+                return res.status(400).json({ success: false, error: `Template is ${template.status}, must be APPROVED to send.` });
             }
 
             const status = campaign.status;
