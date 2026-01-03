@@ -1,16 +1,10 @@
-const config = require('../../config');
-
 /**
- * AuditLog Repository - abstracts database operations for AuditLog model
+ * AuditLog Repository - MySQL only
  */
 class AuditLogRepository {
-    constructor() {
-        this.dbType = config.database.type;
-    }
-
     getModel() {
-        const models = require('../models');
-        return models.AuditLog;
+        const { AuditLog } = require('../models/sequelize');
+        return AuditLog;
     }
 
     async findAll(filter = {}, options = {}) {
@@ -18,29 +12,17 @@ class AuditLogRepository {
         const limit = options.limit || 50;
         const skip = options.skip || 0;
 
-        if (this.dbType === 'mysql') {
-            const { count, rows } = await AuditLog.findAndCountAll({
-                where: filter,
-                order: [['createdAt', 'DESC']],
-                limit,
-                offset: skip
-            });
-            return { logs: rows.map(log => this._normalize(log)), count };
-        } else {
-            const [logs, count] = await Promise.all([
-                AuditLog.find(filter)
-                    .sort({ createdAt: -1 })
-                    .skip(skip)
-                    .limit(limit),
-                AuditLog.countDocuments(filter)
-            ]);
-            return { logs: logs.map(log => this._normalize(log)), count };
-        }
+        const { count, rows } = await AuditLog.findAndCountAll({
+            where: filter,
+            order: [['createdAt', 'DESC']],
+            limit,
+            offset: skip
+        });
+        return { logs: rows.map(log => this._normalize(log)), count };
     }
 
     async create(data) {
         const AuditLog = this.getModel();
-        // Normalize field names for storage
         const normalizedData = {
             userId: data.userId || data.user_id || null,
             userEmail: data.userEmail || data.user_email || null,
@@ -54,25 +36,21 @@ class AuditLogRepository {
         return await AuditLog.create(normalizedData);
     }
 
-    /**
-     * Normalize log output to snake_case for API consistency
-     */
     _normalize(log) {
-        const obj = log.toObject ? log.toObject() : log.toJSON ? log.toJSON() : log;
+        const obj = log.toJSON();
         return {
-            id: obj._id || obj.id,
-            user_id: obj.userId || obj.user_id || null,
-            user_email: obj.userEmail || obj.user_email || null,
+            id: obj.id,
+            user_id: obj.userId || null,
+            user_email: obj.userEmail || null,
             action: obj.action,
-            entity_type: obj.entityType || obj.entity_type || null,
-            entity_id: obj.entityId || obj.entity_id || null,
+            entity_type: obj.entityType || null,
+            entity_id: obj.entityId || null,
             changes: obj.changes || null,
-            ip_address: obj.ipAddress || obj.ip_address || null,
-            user_agent: obj.userAgent || obj.user_agent || null,
-            created_at: obj.createdAt || obj.created_at || new Date()
+            ip_address: obj.ipAddress || null,
+            user_agent: obj.userAgent || null,
+            created_at: obj.createdAt || new Date()
         };
     }
 }
 
 module.exports = new AuditLogRepository();
-

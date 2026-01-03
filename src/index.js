@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 
 const config = require('./config');
-const { connectDB, syncDB, getDbType } = require('./db/connection');
+const { connectDB, syncDB } = require('./db/connection');
 const { templateRepository, personRepository, campaignRepository, userRepository } = require('./db/repositories');
 const { NotificationFactory } = require('./services/notifications');
 
@@ -55,7 +55,7 @@ app.get('/api/health', (req, res) => {
         status: 'ok',
         version: '2.0.0',
         timestamp: new Date().toISOString(),
-        database: getDbType(),
+        database: 'mysql',
         channels: configuredChannels
     });
 });
@@ -162,7 +162,6 @@ const start = async () => {
     messageWorker.startWorker();
 
     const server = app.listen(config.app.port, () => {
-        const dbType = getDbType();
         const queue = require('./services/queue');
         console.log(`
 ╔═══════════════════════════════════════════════════════════════════╗
@@ -171,7 +170,7 @@ const start = async () => {
 ║                                                                   ║
 ║  Server: http://localhost:${config.app.port}                              ║
 ║  Environment: ${config.app.env}                                    ║
-║  Database: ${dbType.toUpperCase()}                                          ║
+║  Database: MYSQL                                          ║
 ║  Queue:    ${queue.isQueueEnabled() ? 'REDIS (Enabled)' : 'NONE (Disabled)'}                         ║
 ║                                                                   ║
 ║  Default Admin: admin@admin.com / admin123                        ║

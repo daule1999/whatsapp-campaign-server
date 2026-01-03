@@ -31,16 +31,16 @@ module.exports = (sequelize) => {
             allowNull: true
         },
         category: {
-            type: DataTypes.ENUM('MARKETING', 'UTILITY', 'AUTHENTICATION'),
+            type: DataTypes.STRING(20),
             defaultValue: 'MARKETING'
         },
         parameterFormat: {
-            type: DataTypes.ENUM('NAMED', 'POSITIONAL'),
+            type: DataTypes.STRING(20),
             defaultValue: 'POSITIONAL',
             field: 'parameter_format'
         },
         status: {
-            type: DataTypes.ENUM('active', 'inactive', 'pending', 'approved', 'rejected'),
+            type: DataTypes.STRING(20),
             defaultValue: 'pending'
         },
         createdBy: {

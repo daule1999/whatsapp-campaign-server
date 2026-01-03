@@ -14,10 +14,7 @@ module.exports = {
     },
 
     database: {
-        type: process.env.DB_TYPE || 'mongodb', // 'mysql' or 'mongodb'
-        // MongoDB config
-        mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/whatsapp_campaign',
-        // MySQL config
+        // MySQL config (MongoDB removed)
         mysql: {
             host: process.env.DB_HOST || 'localhost',
             port: parseInt(process.env.DB_PORT) || 3306,
