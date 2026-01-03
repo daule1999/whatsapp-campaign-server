@@ -138,8 +138,7 @@ class WhatsAppService {
             return {
                 success: false,
                 error: rawError?.message || error.message,
-                rawError: rawError,
-                to
+                rawError: rawError
             };
         }
     }

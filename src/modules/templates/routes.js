@@ -87,6 +87,78 @@ router.post('/',
 );
 
 /**
+ * Sync templates from WhatsApp
+ * POST /api/templates/sync
+ */
+router.post('/sync',
+    auditLog('TEMPLATE_SYNC', 'template'),
+    async (req, res) => {
+        try {
+            // 1. Fetch from WhatsApp
+            const result = await whatsapp.getTemplates();
+
+            if (!result.success) {
+                return res.status(500).json({
+                    success: false,
+                    error: `WhatsApp API Error: ${result.error}`,
+                    details: result.rawError
+                });
+            }
+
+            const waTemplates = result.templates;
+            const synced = [];
+            let created = 0;
+            let updated = 0;
+
+            // 2. Sync with DB
+            for (const waTmpl of waTemplates) {
+                // Find by name + language (composite key logic usually, but name is unique per language usually? No, name is unique per account usually, but can look up by name)
+                // WhatsApp enforces unique names.
+
+                let template = await templateRepository.findOne({ waTemplateName: waTmpl.name });
+
+                const templateData = {
+                    name: waTmpl.name,
+                    waTemplateName: waTmpl.name,
+                    category: waTmpl.category,
+                    languageCode: waTmpl.language,
+                    status: waTmpl.status.toLowerCase(),
+                    components: waTmpl.components,
+                    parameterFormat: waTmpl.parameter_format || 'POSITIONAL',
+                    // id is usually stored too, but we use our own ID. maybe store wa_id in metadata?
+                };
+
+                if (template) {
+                    await templateRepository.updateById(template.id, templateData);
+                    updated++;
+                } else {
+                    template = await templateRepository.create({
+                        ...templateData,
+                        createdBy: req.user.id // Sync initiated by this user
+                    });
+                    created++;
+                }
+                synced.push(template);
+            }
+
+            res.json({
+                success: true,
+                message: `Synced ${waTemplates.length} templates`,
+                data: {
+                    total: waTemplates.length,
+                    created,
+                    updated,
+                    templates: synced
+                }
+            });
+        } catch (error) {
+            console.error('Sync templates error:', error);
+            res.status(500).json({ success: false, error: 'Failed to sync templates' });
+        }
+    }
+);
+
+/**
  * Get template by ID
  * GET /api/templates/:id
  */

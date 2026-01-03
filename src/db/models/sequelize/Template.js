@@ -34,6 +34,11 @@ module.exports = (sequelize) => {
             type: DataTypes.ENUM('MARKETING', 'UTILITY', 'AUTHENTICATION'),
             defaultValue: 'MARKETING'
         },
+        parameterFormat: {
+            type: DataTypes.ENUM('NAMED', 'POSITIONAL'),
+            defaultValue: 'POSITIONAL',
+            field: 'parameter_format'
+        },
         status: {
             type: DataTypes.ENUM('active', 'inactive', 'pending', 'approved', 'rejected'),
             defaultValue: 'pending'
