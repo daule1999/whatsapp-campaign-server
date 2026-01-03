@@ -39,6 +39,10 @@ class UserRepository {
         return this.findOne({ apiKey });
     }
 
+    async findByEmail(email) {
+        return this.findOne({ email });
+    }
+
     async findAll(filter = {}, options = {}) {
         const User = this.getModel();
         if (this.dbType === 'mysql') {
