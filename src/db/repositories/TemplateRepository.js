@@ -22,6 +22,15 @@ class TemplateRepository {
         }
     }
 
+    async findOne(filter = {}) {
+        const Template = this.getModel();
+        if (this.dbType === 'mysql') {
+            return await Template.findOne({ where: filter });
+        } else {
+            return await Template.findOne(filter);
+        }
+    }
+
     async findAll(filter = {}, options = {}) {
         const Template = this.getModel();
         if (this.dbType === 'mysql') {
