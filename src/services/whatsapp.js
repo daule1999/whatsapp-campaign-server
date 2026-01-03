@@ -12,16 +12,28 @@ class WhatsAppService {
      * Send a template message
      */
     async sendTemplateMessage(to, templateName, languageCode = 'en', components = []) {
+        // Filter components - only include those with actual parameters (for dynamic values)
+        // Components from template storage contain 'type', 'text', 'format' which are NOT for sending
+        // When sending, we only need components with 'parameters' array
+        const sendableComponents = Array.isArray(components)
+            ? components.filter(c => c.parameters && c.parameters.length > 0)
+            : [];
+
         const payload = {
             messaging_product: 'whatsapp',
             to: this.formatPhone(to),
             type: 'template',
             template: {
                 name: templateName,
-                language: { code: languageCode },
-                components: components
+                language: { code: languageCode }
             }
         };
+
+        // Only add components if there are actual parameters
+        if (sendableComponents.length > 0) {
+            payload.template.components = sendableComponents;
+        }
+
         const url = `${this.apiUrl}/${this.phoneNumberId}/messages`;
 
         try {
@@ -119,6 +131,35 @@ class WhatsAppService {
                 error: rawError?.message || error.message,
                 rawError: rawError,
                 request: { url, method: 'POST', data }
+            };
+        }
+    }
+
+    /**
+     * Delete message template from WhatsApp
+     */
+    async deleteTemplate(templateName) {
+        const url = `${this.apiUrl}/${config.whatsapp.businessAccountId}/message_templates?name=${encodeURIComponent(templateName)}`;
+        console.log('Deleting WhatsApp template:', templateName);
+        try {
+            const response = await axios.delete(
+                url,
+                {
+                    headers: { 'Authorization': `Bearer ${this.token}` }
+                }
+            );
+
+            return {
+                success: true,
+                data: response.data
+            };
+        } catch (error) {
+            console.error('Delete template error:', error.response?.data || error.message);
+            const rawError = error.response?.data?.error;
+            return {
+                success: false,
+                error: rawError?.message || error.message,
+                rawError: rawError
             };
         }
     }

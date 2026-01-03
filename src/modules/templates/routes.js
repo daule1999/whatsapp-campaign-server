@@ -256,11 +256,26 @@ router.delete('/:id',
     auditLog('TEMPLATE_DELETE', 'template'),
     async (req, res) => {
         try {
-            const deleted = await templateRepository.deleteById(req.params.id);
+            // First get the template to get the waTemplateName
+            const template = await templateRepository.findById(req.params.id);
 
-            if (!deleted) {
+            if (!template) {
                 return res.status(404).json({ success: false, error: 'Template not found' });
             }
+
+            // Delete from WhatsApp first
+            const whatsapp = require('../../services/whatsapp');
+            if (template.waTemplateName) {
+                const waResult = await whatsapp.deleteTemplate(template.waTemplateName);
+                if (!waResult.success) {
+                    console.warn('WhatsApp template delete warning:', waResult.error);
+                    // Continue with local delete even if WhatsApp delete fails
+                    // (template might not exist on WhatsApp or already deleted)
+                }
+            }
+
+            // Delete from database
+            await templateRepository.deleteById(req.params.id);
 
             res.json({ success: true, message: 'Template deleted' });
         } catch (error) {
