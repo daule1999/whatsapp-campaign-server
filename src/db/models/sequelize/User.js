@@ -38,7 +38,6 @@ module.exports = (sequelize) => {
         apiKey: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            unique: true,
             field: 'api_key'
         },
         refreshToken: {
