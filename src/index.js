@@ -135,35 +135,35 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 404 handler
+// 404 handler - Must be last
 app.use((req, res) => {
     res.status(404).json({ success: false, error: 'Not found' });
 });
 
-// Start server
-async function start() {
-    const connected = await connectDB();
-
-    if (!connected) {
-        console.error(`Failed to connect to ${getDbType()} database`);
-        console.log('Please check your database configuration in .env');
-        process.exit(1);
-    }
-
-    // Sync database (for MySQL)
+const start = async () => {
+    await connectDB();
     await syncDB();
 
-    // Create default admin
-    try {
-        await userRepository.createDefaultAdmin();
-    } catch (error) {
+    // Check if admin exists
+    const adminCheck = await userRepository.findByEmail('admin@admin.com');
+    if (!adminCheck) {
+        console.log('Creating default admin...');
+        const User = require('./db/models').User;
+        if (User.createDefaultAdmin) {
+            await User.createDefaultAdmin();
+        }
         console.log('Admin check complete');
     }
 
     const whatsappProvider = NotificationFactory.getProvider('whatsapp');
 
-    app.listen(config.app.port, () => {
+    // Start message queue worker
+    const messageWorker = require('./services/messageWorker');
+    messageWorker.startWorker();
+
+    const server = app.listen(config.app.port, () => {
         const dbType = getDbType();
+        const queue = require('./services/queue');
         console.log(`
 ╔═══════════════════════════════════════════════════════════════════╗
 ║       Notification Campaign Manager API v2.0                      ║
@@ -172,6 +172,7 @@ async function start() {
 ║  Server: http://localhost:${config.app.port}                              ║
 ║  Environment: ${config.app.env}                                    ║
 ║  Database: ${dbType.toUpperCase()}                                          ║
+║  Queue:    ${queue.isQueueEnabled() ? 'REDIS (Enabled)' : 'NONE (Disabled)'}                         ║
 ║                                                                   ║
 ║  Default Admin: admin@admin.com / admin123                        ║
 ║                                                                   ║
@@ -184,15 +185,24 @@ async function start() {
 ║    Admin:      /api/admin      (user management)                  ║
 ║    Public API: /api/v1         (external integration)             ║
 ║    Dashboard:  /api/dashboard  (stats)                            ║
+║    Queue:      /api/queue/status                                  ║
 ║                                                                   ║
 ║  Channels: WhatsApp ${whatsappProvider.isConfigured() ? '✓' : '✗'} | SMS ✗ | Email ✗ | IVR ✗   ║
 ║                                                                   ║
 ╚═══════════════════════════════════════════════════════════════════╝
     `);
     });
-}
+
+    // Graceful shutdown
+    process.on('SIGTERM', async () => {
+        console.log('SIGTERM signal received: closing HTTP server');
+        await messageWorker.stopWorker();
+        server.close(() => {
+            console.log('HTTP server closed');
+        });
+    });
+};
 
 start().catch(console.error);
 
 module.exports = app;
-

@@ -289,6 +289,39 @@ router.post('/:id/send',
             // Update campaign status
             await campaignRepository.updateById(req.params.id, { status: 'running', startedAt: new Date() });
 
+            // Try to use queue if available
+            const queue = require('../../services/queue');
+
+            if (queue.isQueueEnabled()) {
+                // Use BullMQ for background processing
+                const messages = campaignContacts.map(cc => {
+                    const contact = dbType === 'mysql' ? cc.Contact : cc.contactId;
+                    const ccId = dbType === 'mysql' ? cc.id : cc._id;
+
+                    return {
+                        phone: contact.phone,
+                        templateName: template.waTemplateName,
+                        languageCode: template.languageCode || 'en',
+                        components: template.components || [],
+                        campaignId: req.params.id,
+                        campaignContactId: ccId
+                    };
+                });
+
+                await queue.addBulkMessageJobs(req.params.id, messages);
+
+                return res.json({
+                    success: true,
+                    message: 'Campaign started',
+                    data: {
+                        total: campaignContacts.length,
+                        queued: messages.length,
+                        mode: 'background'
+                    }
+                });
+            }
+
+            // Fallback to synchronous sending if queue not available
             const delay = config.messaging.delayMs;
             let sent = 0;
             let failed = 0;
@@ -329,7 +362,7 @@ router.post('/:id/send',
 
             await campaignRepository.updateById(req.params.id, { status: 'completed', completedAt: new Date() });
 
-            res.json({ success: true, data: { total: campaignContacts.length, sent, failed } });
+            res.json({ success: true, data: { total: campaignContacts.length, sent, failed, mode: 'sync' } });
         } catch (error) {
             console.error('Send campaign error:', error);
             await campaignRepository.updateOne({ id: req.params.id }, { status: 'failed' });
