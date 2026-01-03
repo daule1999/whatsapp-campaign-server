@@ -35,6 +35,7 @@ const sequelize = new Sequelize(
 const User = require('./User')(sequelize);
 const Template = require('./Template')(sequelize);
 const Contact = require('./Contact')(sequelize);
+const Person = require('./Person')(sequelize);
 const Campaign = require('./Campaign')(sequelize);
 const CampaignContact = require('./CampaignContact')(sequelize);
 const AuditLog = require('./AuditLog')(sequelize);
@@ -70,6 +71,7 @@ module.exports = {
     User,
     Template,
     Contact,
+    Person,
     Campaign,
     CampaignContact,
     AuditLog

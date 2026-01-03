@@ -101,7 +101,10 @@ router.post('/',
             res.status(201).json({ success: true, data: person });
         } catch (error) {
             console.error('Create person error:', error);
-            res.status(500).json({ success: false, error: 'Failed to create person' });
+            const message = error.name === 'SequelizeUniqueConstraintError'
+                ? 'A person with this phone number already exists'
+                : error.message || 'Failed to create person';
+            res.status(500).json({ success: false, error: message });
         }
     }
 );
