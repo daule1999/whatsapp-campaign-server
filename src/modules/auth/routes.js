@@ -113,8 +113,8 @@ router.post('/login',
                 });
             }
 
-            // Check if user is active
-            if (!userData.isActive) {
+            // Check if user is active (treat NULL/undefined as active for backwards compatibility)
+            if (userData.isActive === false) {
                 return res.status(403).json({
                     success: false,
                     error: 'Your account is inactive. Please contact admin for activation.',
