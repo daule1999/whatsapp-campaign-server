@@ -26,7 +26,7 @@ module.exports = (sequelize) => {
             }
         },
         status: {
-            type: DataTypes.ENUM('pending', 'sent', 'delivered', 'read', 'failed'),
+            type: DataTypes.ENUM('pending', 'queued', 'sending', 'sent', 'delivered', 'read', 'failed'),
             defaultValue: 'pending'
         },
         messageId: {

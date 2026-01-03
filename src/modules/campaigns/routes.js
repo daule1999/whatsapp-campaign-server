@@ -294,25 +294,34 @@ router.post('/:id/send',
 
             if (queue.isQueueEnabled()) {
                 // Use BullMQ for background processing
-                const messages = campaignContacts.map(cc => {
+                const messages = [];
+                const updates = [];
+
+                for (const cc of campaignContacts) {
                     const contact = dbType === 'mysql' ? cc.Contact : cc.contactId;
                     const ccId = dbType === 'mysql' ? cc.id : cc._id;
 
-                    return {
+                    messages.push({
                         phone: contact.phone,
                         templateName: template.waTemplateName,
                         languageCode: template.languageCode || 'en',
                         components: template.components || [],
                         campaignId: req.params.id,
                         campaignContactId: ccId
-                    };
-                });
+                    });
+
+                    // Prepare DB update
+                    updates.push(campaignContactRepository.updateById(ccId, { status: 'queued' }));
+                }
+
+                // Update all contacts to queued status
+                await Promise.all(updates);
 
                 await queue.addBulkMessageJobs(req.params.id, messages);
 
                 return res.json({
                     success: true,
-                    message: 'Campaign started',
+                    message: 'Campaign queued for sending',
                     data: {
                         total: campaignContacts.length,
                         queued: messages.length,
