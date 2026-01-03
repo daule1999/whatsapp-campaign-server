@@ -403,6 +403,16 @@ router.post('/:id/send',
                         status: 'failed',
                         error: JSON.stringify(result.rawError || result.error)
                     });
+                    try {
+                        await errorLogRepository.create({
+                            entityType: 'CAMPAIGN_CONTACT',
+                            entityId: ccId,
+                            errorCode: 'SEND_FAILED',
+                            errorMessage: result.error,
+                            errorDetails: JSON.stringify(result),
+                            metadata: { campaignId: req.params.id, phone: phone }
+                        });
+                    } catch (e) { console.error('Log error failed', e); }
                     failed++;
                 }
 
@@ -418,6 +428,16 @@ router.post('/:id/send',
             res.json({ success: true, data: { total: campaignContacts.length, sent, failed, mode: 'sync' } });
         } catch (error) {
             console.error('Send campaign error:', error);
+            try {
+                await errorLogRepository.create({
+                    entityType: 'CAMPAIGN',
+                    entityId: req.params.id,
+                    errorCode: 'SEND_CRASH',
+                    errorMessage: error.message,
+                    errorDetails: JSON.stringify({ stack: error.stack }),
+                    metadata: { userId: req.user.id }
+                });
+            } catch (e) { }
             await campaignRepository.updateOne({ id: req.params.id }, { status: 'failed' });
             res.status(500).json({ success: false, error: 'Failed to send campaign' });
         }

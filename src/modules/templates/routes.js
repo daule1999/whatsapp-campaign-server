@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, query } = require('express-validator');
-const { templateRepository } = require('../../db/repositories');
+const { templateRepository, errorLogRepository } = require('../../db/repositories');
 const { authenticate, validate, auditLog } = require('../../middleware');
 const whatsapp = require('../../services/whatsapp');
 
@@ -55,7 +55,7 @@ router.post('/',
                 name: wa_template_name,
                 category: category || 'MARKETING',
                 allow_category_change: true,
-                language: { code: language_code || 'en' },
+                language: language_code || 'en',
                 components: components || []
             });
 
@@ -82,6 +82,19 @@ router.post('/',
             res.status(201).json({ success: true, data: template });
         } catch (error) {
             console.error('Create template error:', error);
+            try {
+                await errorLogRepository.create({
+                    entityType: 'TEMPLATE',
+                    errorCode: 'CREATE_FAILED',
+                    errorMessage: error.message,
+                    errorDetails: JSON.stringify({
+                        request: req.body,
+                        response: error.response?.data,
+                        stack: error.stack
+                    }),
+                    metadata: { userId: req.user.id }
+                });
+            } catch (e) { console.error('Log error failed:', e); }
             res.status(500).json({ success: false, error: 'Failed to create template' });
         }
     }
@@ -154,6 +167,18 @@ router.post('/sync',
             });
         } catch (error) {
             console.error('Sync templates error:', error);
+            try {
+                await errorLogRepository.create({
+                    entityType: 'TEMPLATE',
+                    errorCode: 'SYNC_FAILED',
+                    errorMessage: error.message,
+                    errorDetails: JSON.stringify({
+                        response: error.response?.data,
+                        stack: error.stack
+                    }),
+                    metadata: { userId: req.user.id }
+                });
+            } catch (e) { console.error('Log error failed:', e); }
             res.status(500).json({ success: false, error: 'Failed to sync templates' });
         }
     }
