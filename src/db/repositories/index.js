@@ -13,5 +13,6 @@ module.exports = {
     personRepository,
     campaignRepository,
     campaignContactRepository,
-    auditLogRepository
+    auditLogRepository,
+    errorLogRepository: require('./ErrorLogRepository')
 };

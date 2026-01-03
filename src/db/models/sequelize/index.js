@@ -39,6 +39,7 @@ const Person = require('./Person')(sequelize);
 const Campaign = require('./Campaign')(sequelize);
 const CampaignContact = require('./CampaignContact')(sequelize);
 const AuditLog = require('./AuditLog')(sequelize);
+const ErrorLog = require('./ErrorLog')(sequelize);
 
 // Define associations
 User.hasMany(Template, { foreignKey: 'createdBy', as: 'templates' });
@@ -74,5 +75,6 @@ module.exports = {
     Person,
     Campaign,
     CampaignContact,
-    AuditLog
+    AuditLog,
+    ErrorLog
 };

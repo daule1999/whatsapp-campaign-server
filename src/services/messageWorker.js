@@ -1,6 +1,6 @@
 const { Worker } = require('bullmq');
 const whatsapp = require('./whatsapp');
-const { campaignContactRepository, campaignRepository } = require('../db/repositories');
+const { campaignContactRepository, campaignRepository, errorLogRepository } = require('../db/repositories');
 const config = require('../config');
 const { getConnection } = require('./queue');
 
@@ -51,6 +51,20 @@ async function processMessage(job) {
             await campaignContactRepository.updateById(campaignContactId, {
                 status: 'failed',
                 error: JSON.stringify(result.rawError || result.error)
+            });
+
+            // Log to centralized ErrorLog
+            await errorLogRepository.create({
+                entityType: 'campaign',
+                entityId: String(campaignId),
+                errorCode: result.rawError?.code ? String(result.rawError.code) : 'UNKNOWN',
+                errorMessage: result.error || 'Unknown error',
+                errorDetails: JSON.stringify({
+                    response: result.rawError || result.error,
+                    request: result.request,
+                    api: 'whatsapp_business_api'
+                }),
+                metadata: { campaignContactId, phone }
             });
         }
     }

@@ -50,25 +50,30 @@ router.post('/', async (req, res) => {
                                 }
 
                                 // Update campaign_contact
-                                const contact = await campaignContactRepository.updateByMessageId(
-                                    status.id,
-                                    updateData
-                                );
+                                // Find contact first to get campaignId and current status
+                                const { campaignContactRepository } = require('../../db/repositories');
+                                // We need a findByMessageId method, or use findAll
+                                const contacts = await campaignContactRepository.findAll({ messageId: status.id });
+                                const contact = contacts[0] || (contacts.length > 0 ? contacts[0] : null) || (Array.isArray(contacts) ? contacts[0] : contacts);
 
-                                // Update campaign stats if contact found
-                                if (contact && contact.campaignId) {
-                                    const { campaignRepository } = require('../../db/repositories');
-                                    const campaign = await campaignRepository.findById(contact.campaignId);
+                                if (contact) {
+                                    await campaignContactRepository.updateById(contact.id, updateData);
 
-                                    if (campaign) {
-                                        const updates = {};
-                                        if (status.status === 'sent') updates.sentCount = (campaign.sentCount || 0) + 1;
-                                        if (status.status === 'delivered') updates.deliveredCount = (campaign.deliveredCount || 0) + 1;
-                                        if (status.status === 'read') updates.readCount = (campaign.readCount || 0) + 1;
-                                        if (status.status === 'failed') updates.failedCount = (campaign.failedCount || 0) + 1;
+                                    // Update campaign stats
+                                    if (contact.campaignId) {
+                                        const { campaignRepository } = require('../../db/repositories');
+                                        const campaign = await campaignRepository.findById(contact.campaignId);
 
-                                        if (Object.keys(updates).length > 0) {
-                                            await campaignRepository.updateById(contact.campaignId, updates);
+                                        if (campaign) {
+                                            const updates = {};
+                                            if (status.status === 'sent') updates.sentCount = (campaign.sentCount || 0) + 1;
+                                            if (status.status === 'delivered') updates.deliveredCount = (campaign.deliveredCount || 0) + 1;
+                                            if (status.status === 'read') updates.readCount = (campaign.readCount || 0) + 1;
+                                            if (status.status === 'failed') updates.failedCount = (campaign.failedCount || 0) + 1;
+
+                                            if (Object.keys(updates).length > 0) {
+                                                await campaignRepository.updateById(contact.campaignId, updates);
+                                            }
                                         }
                                     }
                                 }

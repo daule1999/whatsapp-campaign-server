@@ -12,19 +12,22 @@ class WhatsAppService {
      * Send a template message
      */
     async sendTemplateMessage(to, templateName, languageCode = 'en', components = []) {
+        const payload = {
+            messaging_product: 'whatsapp',
+            to: this.formatPhone(to),
+            type: 'template',
+            template: {
+                name: templateName,
+                language: { code: languageCode },
+                components: components
+            }
+        };
+        const url = `${this.apiUrl}/${this.phoneNumberId}/messages`;
+
         try {
             const response = await axios.post(
-                `${this.apiUrl}/${this.phoneNumberId}/messages`,
-                {
-                    messaging_product: 'whatsapp',
-                    to: this.formatPhone(to),
-                    type: 'template',
-                    template: {
-                        name: templateName,
-                        language: { code: languageCode },
-                        components: components
-                    }
-                },
+                url,
+                payload,
                 {
                     headers: {
                         'Authorization': `Bearer ${this.token}`,
@@ -45,7 +48,8 @@ class WhatsAppService {
                 success: false,
                 error: rawError?.message || error.message,
                 rawError: rawError,
-                to
+                to,
+                request: { url, method: 'POST', data: payload }
             };
         }
     }
@@ -92,9 +96,10 @@ class WhatsAppService {
      * Create message template on WhatsApp
      */
     async createTemplate(data) {
+        const url = `${this.apiUrl}/${config.whatsapp.businessAccountId}/message_templates`;
         try {
             const response = await axios.post(
-                `${this.apiUrl}/${config.whatsapp.businessAccountId}/message_templates`,
+                url,
                 data,
                 {
                     headers: { 'Authorization': `Bearer ${this.token}` }
@@ -111,7 +116,8 @@ class WhatsAppService {
             return {
                 success: false,
                 error: rawError?.message || error.message,
-                rawError: rawError
+                rawError: rawError,
+                request: { url, method: 'POST', data }
             };
         }
     }

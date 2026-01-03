@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, query } = require('express-validator');
-const { campaignRepository, campaignContactRepository, templateRepository } = require('../../db/repositories');
+const { campaignRepository, campaignContactRepository, templateRepository, errorLogRepository } = require('../../db/repositories');
 const { authenticate, validate, auditLog } = require('../../middleware');
 const whatsapp = require('../../services/whatsapp');
 const config = require('../../config');
@@ -118,6 +118,20 @@ router.get('/:id', async (req, res) => {
     } catch (error) {
         console.error('Get campaign error:', error);
         res.status(500).json({ success: false, error: 'Failed to get campaign' });
+    }
+});
+
+/**
+ * Get campaign errors
+ * GET /api/campaigns/:id/errors
+ */
+router.get('/:id/errors', async (req, res) => {
+    try {
+        const logs = await errorLogRepository.findByCampaignId(req.params.id);
+        res.json({ success: true, data: logs });
+    } catch (error) {
+        console.error('Get campaign errors error:', error);
+        res.status(500).json({ success: false, error: 'Failed to get errors' });
     }
 });
 
