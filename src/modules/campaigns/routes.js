@@ -90,31 +90,14 @@ router.get('/:id', async (req, res) => {
         // Get campaign contacts with status
         const contacts = await campaignContactRepository.findByCampaignWithContacts(req.params.id);
 
-        // Build response based on DB type
-        const dbType = config.database.type;
-        let result;
-
-        if (dbType === 'mysql') {
-            result = {
-                ...campaign.toJSON(),
-                template_name: campaign.template?.name,
-                template_status: campaign.template?.status,
-                wa_template_name: campaign.template?.waTemplateName,
-                language_code: campaign.template?.languageCode,
-                contacts
-            };
-        } else {
-            const obj = campaign.toObject();
-            result = {
-                ...obj,
-                id: obj._id,
-                template_name: campaign.templateId?.name,
-                template_status: campaign.templateId?.status,
-                wa_template_name: campaign.templateId?.waTemplateName,
-                language_code: campaign.templateId?.languageCode,
-                contacts
-            };
-        }
+        const result = {
+            ...campaign.toJSON(),
+            template_name: campaign.template?.name,
+            template_status: campaign.template?.status,
+            wa_template_name: campaign.template?.waTemplateName,
+            language_code: campaign.template?.languageCode,
+            contacts
+        };
 
         res.json({ success: true, data: result });
     } catch (error) {
@@ -158,7 +141,7 @@ router.put('/:id',
                 return res.status(404).json({ success: false, error: 'Campaign not found' });
             }
 
-            const status = config.database.type === 'mysql' ? campaign.status : campaign.status;
+            const status = campaign.status;
             if (status !== 'draft') {
                 return res.status(400).json({ success: false, error: 'Only draft campaigns can be edited' });
             }
@@ -195,7 +178,7 @@ router.post('/:id/contacts',
                 return res.status(404).json({ success: false, error: 'Campaign not found' });
             }
 
-            const status = config.database.type === 'mysql' ? campaign.status : campaign.status;
+            const status = campaign.status;
             if (status !== 'draft') {
                 return res.status(400).json({ success: false, error: 'Only draft campaigns can be modified' });
             }
@@ -246,7 +229,7 @@ router.delete('/:id/contacts',
                 return res.status(400).json({ success: false, error: 'Campaign not found' });
             }
 
-            const status = config.database.type === 'mysql' ? campaign.status : campaign.status;
+            const status = campaign.status;
             if (status !== 'draft') {
                 return res.status(400).json({ success: false, error: 'Only draft campaigns can be modified' });
             }
@@ -280,8 +263,7 @@ router.post('/:id/send',
                 return res.status(404).json({ success: false, error: 'Campaign not found' });
             }
 
-            const dbType = config.database.type;
-            const template = dbType === 'mysql' ? campaign.template : campaign.templateId;
+            const template = campaign.template;
 
             if (!template) {
                 return res.status(400).json({ success: false, error: 'Campaign must have a template' });
@@ -319,15 +301,15 @@ router.post('/:id/send',
                 const updates = [];
 
                 for (const cc of campaignContacts) {
-                    const contact = dbType === 'mysql' ? cc.Person : cc.contactId;
-                    const ccId = dbType === 'mysql' ? cc.id : cc._id;
+                    const contact = cc.Person;
+                    const ccId = cc.id;
 
                     if (!contact) {
                         console.warn(`Contact not found for CampaignContact ${ccId}, skipping.`);
                         continue;
                     }
 
-                    const phone = dbType === 'mysql' ? (contact.phoneNumber || contact.phone) : contact.phone;
+                    const phone = contact.phoneNumber || contact.phone;
 
                     if (!phone) {
                         console.warn(`Phone number missing for Contact ${contact.id || contact._id}, skipping.`);
@@ -369,15 +351,15 @@ router.post('/:id/send',
             let failed = 0;
 
             for (const cc of campaignContacts) {
-                const contact = dbType === 'mysql' ? cc.Person : cc.contactId;
-                const ccId = dbType === 'mysql' ? cc.id : cc._id;
+                const contact = cc.Person;
+                const ccId = cc.id;
 
                 if (!contact) {
                     console.warn(`Contact not found for CampaignContact ${ccId}, skipping.`);
                     continue;
                 }
 
-                const phone = dbType === 'mysql' ? (contact.phoneNumber || contact.phone) : contact.phone;
+                const phone = contact.phoneNumber || contact.phone;
 
                 if (!phone) {
                     console.warn(`Phone number missing for Contact ${contact.id || contact._id}, skipping.`);
