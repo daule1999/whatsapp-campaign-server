@@ -50,7 +50,7 @@ async function processMessage(job) {
         } else {
             await campaignContactRepository.updateById(campaignContactId, {
                 status: 'failed',
-                error: result.error
+                error: JSON.stringify(result.rawError || result.error)
             });
         }
     }

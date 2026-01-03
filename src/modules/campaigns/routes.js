@@ -381,7 +381,7 @@ router.post('/:id/send',
                 } else {
                     await campaignContactRepository.updateById(ccId, {
                         status: 'failed',
-                        error: result.error
+                        error: JSON.stringify(result.rawError || result.error)
                     });
                     failed++;
                 }

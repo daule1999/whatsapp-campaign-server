@@ -40,9 +40,11 @@ class WhatsAppService {
             };
         } catch (error) {
             console.error('WhatsApp API Error:', error.response?.data || error.message);
+            const rawError = error.response?.data?.error;
             return {
                 success: false,
-                error: error.response?.data?.error?.message || error.message,
+                error: rawError?.message || error.message,
+                rawError: rawError,
                 to
             };
         }
@@ -76,9 +78,11 @@ class WhatsAppService {
             };
         } catch (error) {
             console.error('WhatsApp API Error:', error.response?.data || error.message);
+            const rawError = error.response?.data?.error;
             return {
                 success: false,
-                error: error.response?.data?.error?.message || error.message,
+                error: rawError?.message || error.message,
+                rawError: rawError,
                 to
             };
         }
@@ -101,10 +105,13 @@ class WhatsAppService {
                 templates: response.data.data || []
             };
         } catch (error) {
-            console.error('Get templates error:', error.response?.data || error.message);
+            console.error('WhatsApp API Error:', error.response?.data || error.message);
+            const rawError = error.response?.data?.error;
             return {
                 success: false,
-                error: error.response?.data?.error?.message || error.message
+                error: rawError?.message || error.message,
+                rawError: rawError,
+                to
             };
         }
     }
